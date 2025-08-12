@@ -10,7 +10,7 @@ The goals are to support guaranteeing
    <https://packaging.python.org/en/latest/glossary/#term-Built-Distribution>`__
    someone is installing was built from source in a known build environment
    compatible with their own environment
-2. All of the package’s dependencies were also built from source -- any
+2. All of the package's dependencies were also built from source -- any
    binary package installed will have been built from source
 3. All of the build tools used to build these binary packages will
    also have been built from source
@@ -26,6 +26,7 @@ those special cases directly into fromager.
 .. toctree::
    :maxdepth: 2
 
+   user-guide.md
    using.md
    getting-started.rst
    customization.md
