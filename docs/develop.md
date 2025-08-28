@@ -38,6 +38,19 @@ touch .skip-coverage
 
 When this file exists, the e2e test scripts will skip coverage setup and display "Skipping coverage setup".
 
+## Pre-commit hooks
+
+This repository uses [pre-commit](https://pre-commit.com/) to run linters and formatters before committing code. To use it, install the `pre-commit` package and then install the git hooks:
+
+```shell
+pip install pre-commit
+pre-commit install
+```
+
+After you have installed the hooks, they will run automatically when you commit changes. The hooks run a series of linters and tests to check for common issues and ensure code quality.
+> [!NOTE]
+> The first time you run `pre-commit` after installation, it may take a few moments to download and install the required tools. Subsequent runs will not require this, and will run faster.
+
 ## Logging
 
 Log messages should be all lower case.

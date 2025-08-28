@@ -1,0 +1,43 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+    -   id: trailing-whitespace
+        description: "Trims trailing whitespace."
+    -   id: end-of-file-fixer
+        description: "Ensures that a file is either empty, or ends with one newline."
+    -   id: check-yaml
+        description: "Checks yaml files for parseable syntax."
+    -   id: check-added-large-files
+        description: "Prevents giant files from being committed."
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.10
+    hooks:
+    -   id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        description: "Run ruff linter and formatter."
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.17.1
+    hooks:
+    -   id: mypy
+        description: "Run mypy static type checker."
+        additional_dependencies: [types-requests]
+-   repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.45.0
+    hooks:
+    -   id: markdownlint
+        description: "Run markdownlint."
+        args: ["--config", ".markdownlint-config.yaml"]
+-   repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+    -   id: shellcheck
+        description: "Shell script linter."
+-   repo: https://github.com/PyCQA/doc8
+    rev: v1.1.1
+    hooks:
+    -   id: doc8
+        description: "Lint reStructuredText documentation."
