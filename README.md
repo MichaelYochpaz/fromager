@@ -1,5 +1,7 @@
 # fromager
 
+[![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json?utm_source=badge)](https://codspeed.io/MichaelYochpaz/fromager?utm_source=badge)
+
 Fromager is a tool for rebuilding complete dependency trees of Python
 wheels from source.
 

@@ -86,6 +86,9 @@ docs = [
     "sphinx-rtd-theme",
     "autodoc-pydantic",
 ]
+benchmark = [
+    "pytest-codspeed>=4.2.0",
+]
 
 [project.urls]
 Repository = "https://github.com/python-wheel-build/fromager"
@@ -229,6 +232,13 @@ features = ["test"]
 [tool.hatch.envs.test.scripts]
 test = "python -m coverage run -m pytest --log-level DEBUG -vv {args:tests}"
 coverage-report = ["coverage combine", "coverage report --format=markdown"]
+
+[tool.hatch.envs.benchmark]
+description = "Run performance benchmarks."
+features = ["benchmark"]
+
+[tool.hatch.envs.benchmark.scripts]
+run = "pytest benchmarks/ {args}"
 
 [tool.hatch.envs.lint]
 description = "Run linters."
