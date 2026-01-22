@@ -1,0 +1,122 @@
+name: Benchmarks (Backfill)
+
+# This workflow runs up-to-date benchmarks on historical commits to populate
+# CodSpeed with baseline data. It uses "Runtime Dependency Injection":
+#
+# 1. Checkout the historical commit (code under test)
+# 2. Copy benchmarks/ from source branch (modern test harness)
+# 3. Install project using historical pyproject.toml (correct runtime deps)
+# 4. Extract benchmark deps from source branch's pyproject.toml (single source of truth)
+# 5. Run pytest directly (bypasses missing Hatch env in old commits)
+#
+# See `benchmarks/README.md` for more information.
+
+on:
+  workflow_dispatch:
+    inputs:
+      from_commit:
+        description: 'Start commit SHA (older)'
+        required: true
+        type: string
+      to_commit:
+        description: 'End commit SHA (newer, default: HEAD)'
+        required: false
+        default: 'HEAD'
+        type: string
+      benchmark_source:
+        description: 'Branch to copy benchmarks from'
+        required: false
+        default: 'main'
+        type: string
+      benchmark_set:
+        description: 'Benchmark set to run'
+        required: false
+        default: 'fast'
+        type: choice
+        options:
+          - fast
+          - full
+      force:
+        description: 'Force recalculation (reserved for future use)'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      commits: ${{ steps.get-commits.outputs.commits }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get commits between range
+        id: get-commits
+        run: |
+          FROM="${{ inputs.from_commit }}"
+          TO="${{ inputs.to_commit }}"
+
+          # Get list of commits from oldest to newest
+          COMMITS=$(git rev-list --reverse "$FROM^..$TO" | head -20)
+
+          # Convert to JSON array
+          JSON_COMMITS=$(echo "$COMMITS" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "commits=$JSON_COMMITS" >> $GITHUB_OUTPUT
+          echo "Will benchmark these commits:"
+          echo "$COMMITS"
+
+  backfill:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 1  # Run sequentially to avoid overwhelming CodSpeed
+      matrix:
+        commit: ${{ fromJson(needs.prepare.outputs.commits) }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.commit }}
+          fetch-depth: 0
+
+      - name: Fetch benchmark assets from source branch
+        run: |
+          git fetch origin ${{ inputs.benchmark_source }}
+          rm -rf benchmarks/
+          git restore --source=origin/${{ inputs.benchmark_source }} --worktree benchmarks/
+          git show origin/${{ inputs.benchmark_source }}:pyproject.toml > /tmp/source_pyproject.toml
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install project (uses historical pyproject.toml)
+        run: uv pip install -e . --system
+
+      - name: Install benchmark dependencies (from source branch)
+        run: |
+          python benchmarks/scripts/extract_deps.py /tmp/source_pyproject.toml \
+            | uv pip install -r - --system
+
+      - name: Run benchmarks with CodSpeed
+        uses: CodSpeedHQ/action@v4
+        with:
+          mode: simulation
+          run: |
+            if [ "${{ inputs.benchmark_set }}" = "fast" ]; then
+              pytest benchmarks/ --codspeed -m "not slow"
+            else
+              pytest benchmarks/ --codspeed
+            fi
